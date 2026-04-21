@@ -20,7 +20,7 @@ import java.util.concurrent.Executors;
 public class OrderService implements SubmitOrderUseCase {
 
     // Virtual Thread executor for high-concurrency blocking tasks (if any)
-    private final var virtualThreadExecutor = Executors.newVirtualThreadPerTaskExecutor();
+    private final java.util.concurrent.ExecutorService virtualThreadExecutor = Executors.newVirtualThreadPerTaskExecutor();
 
     @Override
     public Mono<Order> submitOrder(Order order) {
