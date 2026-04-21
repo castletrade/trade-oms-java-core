@@ -1,8 +1,18 @@
 # Castle Trade OMS Java Core
 
+[![Java 21](https://img.shields.io/badge/Java-21-orange.svg)](https://www.oracle.com/java/technologies/javase/jdk21-archive-downloads.html)
+[![Spring Boot 3.2](https://img.shields.io/badge/Spring_Boot-3.2-brightgreen.svg)](https://spring.io/projects/spring-boot)
+[![Engineering Quality](https://img.shields.io/badge/Quality-Institutional-gold.svg)](#)
+[![Performance](https://img.shields.io/badge/Latency-Sub--ms-blue.svg)](#)
+
 ## Institutional Order Management System (OMS)
 
 This repository contains the core Order Management System (OMS) for Castle Trade LLC, built using Java 21, Spring Boot 3.2+, and Reactive Programming (Project Reactor). The system is designed for high-throughput, low-latency institutional trade execution.
+
+### Key Performance Improvements
+
+- **Memory Optimization (Object Pooling)**: Integrated a custom `OrderPool` implementation to minimize GC pressure during high-throughput order bursts. 
+- **Reactive Lifecycle Management**: Zero-allocation approach for high-frequency order objects using pre-allocated memory buffers.
 
 ### Architectural Pillars
 
