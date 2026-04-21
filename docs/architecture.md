@@ -1,21 +1,55 @@
-# Institutional OMS Architecture
+# 🏛️ Institutional OMS Architecture
 
-## Conceptual Design
+## 1. High-Level Design
+The `trade-oms-java-core` follows a **Clean Hexagonal Architecture**, optimized for the **Java 21 Virtual Threads** and **Project Reactor** ecosystems.
 
-The `trade-oms-java-core` is architected as a cloud-native microservice following the **Hexagonal Architecture (Ports and Adapters)** pattern. This ensures that the core trading logic remains independent of external technologies such as databases, messaging queues, or UI frameworks.
+```mermaid
+graph TD
+    subgraph "External Adapters"
+        REST["REST API (WebFlux)"]
+        WS["WebSocket Ingest"]
+    end
 
-### Reactive Execution Pipeline
+    subgraph "Application Core"
+        direction TB
+        PortIn["SubmitOrderUseCase (Port)"]
+        Service["OrderService (Domain Service)"]
+        Pool["OrderPool (Memory Management)"]
+        VThreads["Virtual Threat Executor"]
+    end
 
-1. **Inbound Port**: Orders enter via REST/WebSocket (WebFlux).
-2. **Domain Layer**: The `Order` entity undergoes institutional validation.
-3. **Execution Service**: The `OrderService` handles state transitions.
-4. **Concurrency Model**:
-   - **Non-blocking I/O**: For all external network/DB calls.
-   - **Virtual Threads**: For processing-intensive or legacy-blocking components, allowing for linear scalability without thread-pool exhaustion.
+    subgraph "Domain Model"
+        Order["Order Entity"]
+    end
 
-### Component Diagram (Conceptual)
-- **API Adapter** (Spring WebFlux) -> **SubmitOrder Port** -> **OrderService** (Domain Logic) -> **Repository Port** (R2DBC Adapter).
+    subgraph "Infrastructure Adapters"
+        DB["PostgreSQL (R2DBC)"]
+        Audit["Audit Log (File/Cloud)"]
+    end
 
-## Scalability and Resilience
-- **Horizontally Scalable**: Stateless design allows for immediate scaling behind a load balancer.
-- **Resilience**: Integrated circuit breakers and back-pressure handling via Project Reactor.
+    REST --> PortIn
+    WS --> PortIn
+    PortIn --> Service
+    Service --> Pool
+    Service --> VThreads
+    Service --> Order
+    VThreads --> DB
+    Service --> Audit
+```
+
+## 2. Low-Latency Memory Strategy
+To maintain sub-millisecond execution times under heavy load, the system utilizes a **Zero-Allocation** strategy for hot-path objects.
+
+- **Object Pooling**: Instead of relying on the JVM Garbage Collector for every order, we borrow `Order` instances from a pre-allocated `OrderPool`.
+- **Reactive Lifecycle**: Objects are automatically returned to the pool using `.doFinally()` hooks in the Reactor stream.
+
+## 3. Concurrency Matrix
+| Component | Engine | Strategy |
+| :--- | :--- | :--- |
+| API Ingest | WebFlux | Event Loop (Non-blocking) |
+| Order Validation | Project Reactor | Functional / Stateless |
+| Execution Logic | Virtual Threads | Thread-per-request (Lightweight) |
+| Database I/O | R2DBC | Asynchronous |
+
+---
+*Engineering standard: Castle Trade LLC Institutional Framework.*
