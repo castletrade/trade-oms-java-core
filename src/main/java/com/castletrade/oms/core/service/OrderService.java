@@ -23,7 +23,7 @@ public class OrderService implements SubmitOrderUseCase {
     private final OrderPool orderPool;
 
     // Virtual Thread executor for high-concurrency blocking tasks
-    private final var virtualThreadExecutor = Executors.newVirtualThreadPerTaskExecutor();
+    private final java.util.concurrent.ExecutorService virtualThreadExecutor = Executors.newVirtualThreadPerTaskExecutor();
 
     @Override
     public Mono<Order> submitOrder(Order order) {
