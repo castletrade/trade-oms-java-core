@@ -1,7 +1,7 @@
 package com.castletrade.oms.core.service;
 
-import com.castletrade.oms.core.domain.model.Order;
-import com.castletrade.oms.core.port.in.SubmitOrderUseCase;
+import com.castletrade.oms.core.domain.model.OrderPool;
+import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 import reactor.core.publisher.Mono;
@@ -12,23 +12,35 @@ import java.util.UUID;
 import java.util.concurrent.Executors;
 
 /**
- * Implementation of the Order submission use case using Reactive Streams
- * and Java 21 Virtual Threads for specialized processing.
+ * Implementation of the Order submission use case using Reactive Streams,
+ * Java 21 Virtual Threads, and an Object Pool for memory optimization.
  */
 @Slf4j
 @Service
+@RequiredArgsConstructor
 public class OrderService implements SubmitOrderUseCase {
 
-    // Virtual Thread executor for high-concurrency blocking tasks (if any)
+    private final OrderPool orderPool;
+
+    // Virtual Thread executor for high-concurrency blocking tasks
     private final var virtualThreadExecutor = Executors.newVirtualThreadPerTaskExecutor();
 
     @Override
     public Mono<Order> submitOrder(Order order) {
+        // In a real high-throughput scenario, the 'order' passed here 
+        // would be a DTO, and we would borrow from the pool here.
+        log.debug("Entering order submission pipeline for symbol: {}", order.getSymbol());
+        
         return Mono.just(order)
                 .map(this::initializeOrder)
                 .flatMap(this::validateOrder)
-                .publishOn(Schedulers.fromExecutor(virtualThreadExecutor)) // Offloading to Virtual Threads
+                .publishOn(Schedulers.fromExecutor(virtualThreadExecutor))
                 .doOnNext(this::processExecution)
+                .doFinally(signalType -> {
+                    // Demonstrating the return to pool after the reactive stream completes/errors
+                    log.debug("Returning order resources to pool. Signal: {}", signalType);
+                    orderPool.returnOrder(order);
+                })
                 .subscribeOn(Schedulers.boundedElastic());
     }
 
