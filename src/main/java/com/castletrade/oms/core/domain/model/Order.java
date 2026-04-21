@@ -10,6 +10,8 @@ import java.time.LocalDateTime;
  */
 @Data
 @Builder
+@NoArgsConstructor
+@AllArgsConstructor
 public class Order {
     private String id;
     private String symbol;
@@ -20,6 +22,21 @@ public class Order {
     private ExecutionType executionType;
     private OrderStatus status;
     private LocalDateTime timestamp;
+
+    /**
+     * Resets the order state for reuse in an object pool.
+     */
+    public void clear() {
+        this.id = null;
+        this.symbol = null;
+        this.assetClass = null;
+        this.side = null;
+        this.quantity = null;
+        this.price = null;
+        this.executionType = null;
+        this.status = null;
+        this.timestamp = null;
+    }
 
     public enum AssetClass {
         EQUITY, FX, CRYPTO, FIXED_INCOME
