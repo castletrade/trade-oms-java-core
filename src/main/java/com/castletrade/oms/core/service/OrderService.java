@@ -1,5 +1,6 @@
 package com.castletrade.oms.core.service;
 
+import com.castletrade.oms.core.domain.model.Order;
 import com.castletrade.oms.core.domain.model.OrderPool;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
